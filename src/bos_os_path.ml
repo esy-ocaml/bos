@@ -64,8 +64,13 @@ let rec must_exist path =
 
 (* Delete *)
 
+let win32_remove_readonly_flag file_path =
+  if Sys.win32 then Unix.chmod file_path 0o644 else () 
+
 let delete_file ?(must_exist = false) file =
-  let rec unlink file = try Ok (Unix.unlink @@ Fpath.to_string file) with
+  let rec unlink file =
+    let file_path = Fpath.to_string file in
+    try Ok (win32_remove_readonly_flag file_path; Unix.unlink file_path) with
   | Unix.Unix_error (Unix.ENOENT, _, _) ->
       if not must_exist then Ok () else
       R.error_msgf "delete file %a: No such file" Fpath.pp file
@@ -85,7 +90,8 @@ let delete_dir ?must_exist:(must = false) ?(recurse = false) dir =
         | Some (".." | ".") -> delete_dir_files dh dirs
         | Some file ->
             let rec try_unlink file =
-              try (Unix.unlink (Fpath.to_string file); Ok dirs) with
+              let file_path = Fpath.to_string file in
+              try (win32_remove_readonly_flag file_path; Unix.unlink file_path; Ok dirs) with
               | Unix.Unix_error (Unix.ENOENT, _, _) -> Ok dirs
               | Unix.Unix_error ((Unix.EISDIR (* Linux *)
                                  |Unix.EPERM), _, _) -> Ok (file :: dirs)
