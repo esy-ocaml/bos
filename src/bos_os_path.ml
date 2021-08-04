@@ -153,7 +153,7 @@ let delete_dir ?must_exist:(must = false) ?(recurse = false) dir =
     (fun msg -> R.msgf "delete directory %a: %s" Fpath.pp dir msg)
 
 let rec delete ?(must_exist = false) ?(recurse = false) path =
-  try match Unix.((stat (Fpath.to_string path)).st_kind) with
+  try match Unix.((lstat (Fpath.to_string path)).st_kind) with
   | Unix.S_DIR -> delete_dir ~must_exist ~recurse path
   | _ -> delete_file ~must_exist path
   with
