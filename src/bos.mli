@@ -50,9 +50,9 @@ module Pat : sig
   (** [equal p p'] is [p = p']. *)
 
   val compare : t -> t -> int
-  (** [compare p p'] is {!Pervasives.compare}[ p p']. *)
+  (** [compare p p'] is {!Stdlib.compare}[ p p']. *)
 
-  val of_string : string -> (t, [> R.msg]) Result.result
+  val of_string : string -> (t, [> R.msg]) result
   (** [of_string s] parses [s] according to the pattern syntax
       (i.e. a literal ['$'] must be represented by ["$$"] in [s]). *)
 
@@ -272,7 +272,7 @@ module OS : sig
       control over unix errors use the lower level functions in
       {!Bos.OS.U}. *)
 
-  type ('a, 'e) result = ('a, [> R.msg] as 'e) Result.result
+  type ('a, 'e) result = ('a, [> R.msg] as 'e) Stdlib.result
   (** The type for OS results. *)
 
   (** {1:env Environment variables and program arguments} *)
@@ -315,7 +315,7 @@ module OS : sig
 
         See the {{!examples}examples}. *)
 
-    type 'a parser = string -> ('a, R.msg) Result.result
+    type 'a parser = string -> ('a, R.msg) result
     (** The type for environment variable value parsers. *)
 
     val parser : string -> (string -> 'a option) -> 'a parser
@@ -410,14 +410,14 @@ let timeout : int option =
 
     val conv :
       ?docv:string ->
-      (string -> ('a, R.msg) Result.result) ->
+      (string -> ('a, R.msg) result) ->
       (Format.formatter -> 'a -> unit) -> 'a conv
     (** [conv ~docv parse print] is an argument converter parsing
         values with [parse] and printing them with [print]. [docv]
         is a documentation meta-variable used in the documentation
         to stand for the argument value, defaults to ["VALUE"]. *)
 
-    val conv_parser : 'a conv -> (string -> ('a, R.msg) Result.result)
+    val conv_parser : 'a conv -> (string -> ('a, R.msg) result)
     (** [conv_parser c] is [c]'s parser. *)
 
     val conv_printer : 'a conv -> (Format.formatter -> 'a -> unit)
@@ -428,7 +428,7 @@ let timeout : int option =
 
     val parser_of_kind_of_string :
       kind:string -> (string -> 'a option) ->
-      (string -> ('a, R.msg) Result.result)
+      (string -> ('a, R.msg) result)
     (** [parser_of_kind_of_string ~kind kind_of_string] is an argument
         parser using the [kind_of_string] function for parsing and
         [kind] for errors (e.g. could be ["an integer"] for an [int]
@@ -571,7 +571,7 @@ let timeout : int option =
         map to the corresponding value of type ['a].
 
         {b Warning.} The type ['a] must be comparable with
-        {!Pervasives.compare}.
+        {!Stdlib.compare}.
 
         @raise Invalid_argument if [l] is empty. *)
 
@@ -845,7 +845,7 @@ let main () = main ()
     (** [with_ic file f v] opens [file] as a channel [ic] and returns
         [Ok (f ic v)]. After the function returns (normally or via an
         exception), [ic] is ensured to be closed.  If [file] is
-        {!dash}, [ic] is {!Pervasives.stdin} and not closed when the
+        {!dash}, [ic] is {!Stdlib.stdin} and not closed when the
         function returns. [End_of_file] exceptions raised by [f] are
         turned it into an error message. *)
 
@@ -886,7 +886,7 @@ let main () = main ()
 
     val with_output :
       ?mode:int -> Fpath.t ->
-      (output -> 'a -> (('c, 'd) Result.result as 'b)) -> 'a ->
+      (output -> 'a -> (('c, 'd) result as 'b)) -> 'a ->
       ('b, 'e) result
     (** [with_output file f v] writes the contents of [file] using an
         output [o] given to [f] and returns [Ok (f o v)]. [file] is
@@ -896,20 +896,20 @@ let main () = main ()
 
     val with_oc :
       ?mode:int -> Fpath.t ->
-      (out_channel -> 'a -> (('c, 'd) Result.result as 'b)) ->
+      (out_channel -> 'a -> (('c, 'd) result as 'b)) ->
       'a -> ('b, 'e) result
     (** [with_oc file f v] opens [file] as a channel [oc] and returns
         [Ok (f oc v)]. After the function returns (normally or via an
         exception) [oc] is closed. [file] is not written if [f]
         returns an error. If [file] is {!dash}, [oc] is
-        {!Pervasives.stdout} and not closed when the function
+        {!Stdlib.stdout} and not closed when the function
         returns. *)
 
     val write :
       ?mode:int -> Fpath.t -> string -> (unit, 'e) result
     (** [write file content] outputs [content] to [file]. If [file]
-        is {!dash}, writes to {!Pervasives.stdout}. If an error is
-        returned [file] is left untouched except if {!Pervasives.stdout}
+        is {!dash}, writes to {!Stdlib.stdout}. If an error is
+        returned [file] is left untouched except if {!Stdlib.stdout}
         is written. *)
 
     val writef :
@@ -937,7 +937,7 @@ let main () = main ()
         (defaults to {!Dir.default_tmp}) named according to [pat] and
         created with permissions [mode] (defaults to [0o600] only
         readable and writable by the user). The file is deleted at the
-        end of program execution using a {!Pervasives.at_exit}
+        end of program execution using a {!Stdlib.at_exit}
         handler.
 
         {b Warning.} If you want to write to the file, using
@@ -1058,7 +1058,7 @@ contents d >>= Path.fold err dotfiles elements traverse f acc
         with permissions [mode] (defaults to [0o700] only readable and
         writable by the user). The directory path and its content is
         deleted at the end of program execution using a
-        {!Pervasives.at_exit} handler. *)
+        {!Stdlib.at_exit} handler. *)
 
     val with_tmp :
       ?mode:int -> ?dir:Fpath.t -> tmp_name_pat -> (Fpath.t -> 'a -> 'b) ->
@@ -1140,7 +1140,7 @@ contents d >>= Path.fold err dotfiles elements traverse f acc
     (** {1:run Command runs}
 
         The following set of combinators are designed to be used with
-        {!Pervasives.(|>)} operator. See a few {{!ex}examples}.
+        {!Stdlib.(|>)} operator. See a few {{!ex}examples}.
 
         {b WARNING Windows.} The [~append:true] options for appending
         to files are unsupported on Windows.
@@ -1352,18 +1352,19 @@ let send_email mail =
 
     (** {1 Error handling} *)
 
-    type 'a result = ('a, [`Unix of Unix.error]) Result.result
+    type 'a result = ('a, [`Unix of Unix.error]) Stdlib.result
+                       
     (** The type for Unix results. *)
 
     val pp_error : Format.formatter -> [`Unix of Unix.error] -> unit
     (** [pp_error ppf e] prints [e] on [ppf]. *)
 
     val open_error :
-      'a result -> ('a, [> `Unix of Unix.error]) Result.result
+      'a result -> ('a, [> `Unix of Unix.error]) Stdlib.result
     (** [open_error r] allows to combine a closed unix error
         variant with other variants. *)
 
-    val error_to_msg : 'a result -> ('a, [> R.msg]) Result.result
+    val error_to_msg : 'a result -> ('a, [> R.msg]) Stdlib.result
     (** [error_to_msg r] converts unix errors in [r] to an error message. *)
 
     (** {1 Wrapping {!Unix} calls} *)

@@ -49,7 +49,7 @@ end
 
 (** {1 Astring} *)
 
-val strf : ('a, Format.formatter, unit, string) Pervasives.format4 -> 'a
+val strf : ('a, Format.formatter, unit, string) Stdlib.format4 -> 'a
 (** [strf] is {!Astring.strf}. *)
 
 val (^) : string -> string -> string
